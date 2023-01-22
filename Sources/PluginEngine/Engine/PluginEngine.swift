@@ -2,14 +2,9 @@ import PluginInterface
 import Foundation
 import SwiftUI
 
-
-public extension PluginInterfaceProtocol {
-    var id: UUID { UUID() }
-}
-
-public class PluginEngine {
-    public private(set) var currentPlugin: PluginInterfaceProtocol?
-    public private(set) var plugins: [PluginInterfaceProtocol] = []
+public class PluginEngine: ObservableObject {
+    @Published public private(set) var currentPlugin: (any PluginInterfaceProtocol)?
+    @Published public private(set) var plugins: [any PluginInterfaceProtocol] = []
     private let fileUtils: FileUtilsProtocol
     private let pluginUtils: PluginUtilsProtocol
     
@@ -22,7 +17,6 @@ public class PluginEngine {
         self.pluginUtils = pluginUtils
     }
     
-    
     /**
      Load plugin at [path]
      - parameter path: Plugin path
@@ -32,7 +26,28 @@ public class PluginEngine {
         plugins.append(plugin)
     }
     
-    public func use(plugin: PluginInterfaceProtocol) {
+    public func use(id: UUID) throws {
+        let plugin = plugins.first { p in
+            p.id == id
+        }
+        guard let plugin = plugin else {
+            throw PluginErrors.pluginNotFoundWithId(id: id)
+        }
+        use(plugin: plugin)
+    }
+    
+    
+    public func use(plugin name: String) throws {
+        let plugin = plugins.first { p in
+            p.pluginName == name
+        }
+        guard let plugin = plugin else {
+            throw PluginErrors.pluginNotFoundWithName(name: name)
+        }
+        use(plugin: plugin)
+    }
+    
+    public func use(plugin: any PluginInterfaceProtocol) {
         plugin.setup()
         plugin.onUse()
         currentPlugin = plugin
