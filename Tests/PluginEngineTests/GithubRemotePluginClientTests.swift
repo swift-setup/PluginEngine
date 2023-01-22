@@ -17,6 +17,17 @@ class TestNetworkClient: NetworkRequestProtocol {
     }
 }
 
+class TestFirstNetworkClient: NetworkRequestProtocol {
+    var calledRequest: URLRequest?
+
+    func getRequest(for request: URLRequest) async throws -> (Data, URLResponse) {
+        if calledRequest == nil {
+            calledRequest = request
+        }
+        return ("Hello world".data(using: .utf8)!, HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+    }
+}
+
 class TestNetworkClientWithCount: NetworkRequestProtocol {
     var count = 0
 
@@ -64,6 +75,12 @@ final class GithubRemotePluginClientTests: XCTestCase {
         let repo = client.getRepoName(from: "https://github.com")
         XCTAssertNil(repo)
     }
+    
+    func testGetArch() throws {
+        let client = GitHubRemotePluginClient()
+        let arch = try client.getArch()
+        XCTAssertNotNil(arch)
+    }
 
     func testGetReadme() async throws {
         let client = TestNetworkClient()
@@ -105,10 +122,14 @@ final class GithubRemotePluginClientTests: XCTestCase {
     }
     
     func testLoad() async throws {
-        let client = TestNetworkClient()
+        let client = TestFirstNetworkClient()
         let zipClient = TestZipClient()
         let githubClient = GitHubRemotePluginClient(networkClient: client, zipClient: zipClient)
-        let repo = try await githubClient.load(from: URL(string: "https://github.com/swift-setup/PluginEngine.git")!, version: .init(1, 1, 1))
+        let repo = try await githubClient.load(from: URL(string: "https://github.com/swift-setup/plugin.git")!, version: .init(1, 1, 1))
+        let request = client.calledRequest!
+        let url = request.url!.absoluteString
+        
+        XCTAssertTrue(url.lowercased() == url)
         XCTAssertEqual(repo.readme, "Hello world")
         let localPosition = repo.localPosition
         XCTAssertTrue(localPosition.contains("b.dylib"))

@@ -19,7 +19,7 @@ public protocol ZipProtocol {
 
 public struct NetworkClient: NetworkRequestProtocol {
     public init() {}
-
+    
     public func getRequest(for request: URLRequest) async throws -> (Data, URLResponse) {
         let (data, response) = try await URLSession.shared.data(for: request)
         return (data, response)
@@ -28,11 +28,11 @@ public struct NetworkClient: NetworkRequestProtocol {
 
 public struct ZipClient: ZipProtocol {
     public init() {}
-
+    
     public func unzipFileAtPath(_ path: String, toDestination: String) {
         SSZipArchive.unzipFile(atPath: path, toDestination: toDestination)
     }
-
+    
     public func contentsOfDirectory(atPath path: String) throws -> [String] {
         let fm = FileManager.default
         return try fm.contentsOfDirectory(atPath: path)
@@ -42,30 +42,39 @@ public struct ZipClient: ZipProtocol {
 public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
     let networkClient: NetworkRequestProtocol
     let zipClient: ZipProtocol
-
+    
     public init(networkClient: NetworkRequestProtocol = NetworkClient(), zipClient: ZipProtocol = ZipClient()) {
         self.networkClient = networkClient
         self.zipClient = zipClient
     }
-
+    
+    
     public func load(from remote: URL, version: Version) async throws -> PluginRepo {
-        let targetFileName = "macos_arm64.zip"
+        let targetFileName = "macos_\(try getArch().rawValue).zip"
         let releasePath = "releases/download/\(version.toString())/\(targetFileName)"
-
+        
         let downloadURL = remote.appendingPathComponent(releasePath)
         let downloadPath = FileManager.default.temporaryDirectory.appendingPathComponent(targetFileName).path
-
+        
         try await downloadPackage(from: downloadURL, to: downloadPath)
         let readme = try await getReadme(from: remote, version: version)
-
+        
         // unzip to document directory
         let repoName = getRepoName(from: remote.absoluteString)!
         let destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(repoName).path
         let dylibFile = try unzip(downloadPath, toDestination: destination)
-
+        
         return PluginRepo(localPosition: dylibFile, readme: readme ?? "No content", version: version)
     }
-
+    
+    internal func getArch() throws -> SystemArch {
+        #if arch(arm64)
+        return SystemArch.ARM64
+        #else
+        return SystemArch.X86_64
+        #endif
+    }
+    
     /**
      * Download the package from the given url to the given path and return the first file with .dylib extension
      */
@@ -79,7 +88,7 @@ public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
         }
         throw RemotePluginLoadingErrors.noDylibFound
     }
-
+    
     /**
      * Get the repo name from the given url
      */
@@ -93,7 +102,7 @@ public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
         }
         return nil
     }
-
+    
     /**
      Download package from GitHub Release
      */
@@ -101,11 +110,11 @@ public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
         let request = URLRequest(url: url)
         let (data, response) = try await networkClient.getRequest(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw RemotePluginLoadingErrors.downloadError }
-
+        
         let fileURL = URL(fileURLWithPath: to)
         try data.write(to: fileURL)
     }
-
+    
     /**
      Get the contents of the readme.
      Will try [readme, README, readme.md, README.md]
@@ -114,30 +123,30 @@ public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
         // only keep the part without .com
         // for example: https://github.com/sirily11/TestPlugin.git or https://github.com/sirily11/TestPlugin
         // will be converted to sirily11/TestPlugin
-
+        
         guard let repoName = getRepoName(from: url.absoluteString) else {
             throw RemotePluginLoadingErrors.invalidRepoName
         }
-
+        
         // try README.md, README, readme.md, readme
         let readmeNames = ["README.md", "README", "readme.md", "readme"]
         let baseURL = URL(string: "https://raw.githubusercontent.com")
-
+        
         // construct the url for each readme name with the version and the repo name
-
+        
         let readmeURLs = readmeNames.map { name in
             baseURL!.appendingPathComponent(repoName).appendingPathComponent(version.toString()).appendingPathComponent(name)
         }
-
+        
         // try to get the readme from the url
         for url in readmeURLs {
             let request = URLRequest(url: url)
             let (data, response) = try await networkClient.getRequest(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { continue }
-
+            
             return String(data: data, encoding: .utf8)!
         }
-
+        
         return nil
     }
 }

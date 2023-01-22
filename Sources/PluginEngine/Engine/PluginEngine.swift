@@ -22,57 +22,6 @@ public class PluginEngine: ObservableObject {
         self.remotePluginLoader = remotePluginLoader
     }
     
-    /**
-     Load plugin at [path]
-     - parameter path: Plugin path
-     */
-    public func load(path: String) {
-        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils)
-        plugins.append(plugin)
-    }
-    
-    public func load(url: String, version: Version) async throws -> PluginRepo {
-        isLoadingRemote = true
-        do {
-            guard let url = URL(string: url) else {
-                throw RemotePluginLoadingErrors.invalidURL(url: url)
-            }
-            let repo = try await remotePluginLoader.load(from: url, version: version)
-            load(path: repo.localPosition)
-            return repo
-        } catch {
-            isLoadingRemote = false
-            throw error
-        }
-    }
-    
-    public func use(id: UUID) throws {
-        let plugin = plugins.first { p in
-            p.id == id
-        }
-        guard let plugin = plugin else {
-            throw PluginErrors.pluginNotFoundWithId(id: id)
-        }
-        use(plugin: plugin)
-    }
-    
-    
-    public func use(plugin name: String) throws {
-        let plugin = plugins.first { p in
-            p.pluginName == name
-        }
-        guard let plugin = plugin else {
-            throw PluginErrors.pluginNotFoundWithName(name: name)
-        }
-        use(plugin: plugin)
-    }
-    
-    public func use(plugin: any PluginInterfaceProtocol) {
-        plugin.setup()
-        plugin.onUse()
-        currentPlugin = plugin
-    }
-    
     func handle() {
         //TODO: Add handling method which will handle the event using plugins
     }
@@ -91,5 +40,67 @@ public class PluginEngine: ObservableObject {
         let view = currentPlugin.view as (any View)
         
         return AnyView(view)
+    }
+}
+
+
+//MARK: load plugin
+public extension PluginEngine {
+    internal func addPlugin(plugin: any PluginInterfaceProtocol) {
+        plugins.append(plugin)
+    }
+    
+    /**
+     Load plugin at [path]
+     - parameter path: Plugin path
+     */
+    func load(path: String) {
+        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils)
+        addPlugin(plugin: plugin)
+    }
+    
+    func load(url: String, version: Version) async throws -> PluginRepo {
+        isLoadingRemote = true
+        do {
+            guard let url = URL(string: url) else {
+                throw RemotePluginLoadingErrors.invalidURL(url: url)
+            }
+            let repo = try await remotePluginLoader.load(from: url, version: version)
+            load(path: repo.localPosition)
+            return repo
+        } catch {
+            isLoadingRemote = false
+            throw error
+        }
+    }
+}
+
+//MARK: use plugin
+public extension PluginEngine {
+    func use(id: UUID) throws {
+        let plugin = plugins.first { p in
+            p.id == id
+        }
+        guard let plugin = plugin else {
+            throw PluginErrors.pluginNotFoundWithId(id: id)
+        }
+        use(plugin: plugin)
+    }
+    
+    
+    func use(plugin name: String) throws {
+        let plugin = plugins.first { p in
+            p.pluginName == name
+        }
+        guard let plugin = plugin else {
+            throw PluginErrors.pluginNotFoundWithName(name: name)
+        }
+        use(plugin: plugin)
+    }
+    
+    func use(plugin: any PluginInterfaceProtocol) {
+        plugin.setup()
+        plugin.onUse()
+        currentPlugin = plugin
     }
 }

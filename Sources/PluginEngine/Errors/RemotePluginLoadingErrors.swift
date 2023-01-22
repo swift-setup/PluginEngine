@@ -11,6 +11,7 @@ public enum RemotePluginLoadingErrors: LocalizedError {
     case downloadError
     case invalidRepoName
     case noDylibFound
+    case invalidArch
     case invalidURL(url: String)
     
     public var errorDescription: String? {
@@ -26,6 +27,9 @@ public enum RemotePluginLoadingErrors: LocalizedError {
                 
             case .invalidURL(let url):
                 return "Invalid remote url: \(url)"
+                
+            case .invalidArch:
+                return "Unknown system arch"
         }
     }
 }
