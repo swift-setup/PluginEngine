@@ -5,6 +5,8 @@ import SwiftUI
 public class PluginEngine: ObservableObject {
     @Published public private(set) var currentPlugin: (any PluginInterfaceProtocol)?
     @Published public private(set) var plugins: [any PluginInterfaceProtocol] = []
+    @Published public private(set) var remotePluginLoader: (any RemotePluginLoadingProtocol)?
+    
     private let fileUtils: FileUtilsProtocol
     private let pluginUtils: PluginUtilsProtocol
     
@@ -24,6 +26,10 @@ public class PluginEngine: ObservableObject {
     public func load(path: String) {
         let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils)
         plugins.append(plugin)
+    }
+    
+    public func load(url: String, version: Version) {
+        
     }
     
     public func use(id: UUID) throws {

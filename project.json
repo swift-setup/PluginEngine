@@ -1,0 +1,94 @@
+{
+  "dependencies" : [
+    {
+      "identity" : "plugininterface",
+      "requirement" : {
+        "branch" : [
+          "main"
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/swift-setup/PluginInterface"
+    },
+    {
+      "identity" : "mockingbird",
+      "requirement" : {
+        "range" : [
+          {
+            "lower_bound" : "0.20.0",
+            "upper_bound" : "0.21.0"
+          }
+        ]
+      },
+      "type" : "sourceControl",
+      "url" : "https://github.com/birdrides/mockingbird.git"
+    }
+  ],
+  "manifest_display_name" : "PluginEngine",
+  "name" : "PluginEngine",
+  "path" : "/Users/sirily11/Desktop/swift-setup/PluginEngine",
+  "platforms" : [
+    {
+      "name" : "macos",
+      "version" : "10.15"
+    }
+  ],
+  "products" : [
+    {
+      "name" : "PluginEngine",
+      "targets" : [
+        "PluginEngine"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    }
+  ],
+  "targets" : [
+    {
+      "c99name" : "PluginEngineTests",
+      "module_type" : "SwiftTarget",
+      "name" : "PluginEngineTests",
+      "path" : "Tests/PluginEngineTests",
+      "product_dependencies" : [
+        "Mockingbird"
+      ],
+      "sources" : [
+        "GithubRemotePluginClientTests.swift",
+        "MockingbirdMocks/PluginEngineMocks.generated.swift",
+        "PluginEngineTests.swift"
+      ],
+      "target_dependencies" : [
+        "PluginEngine"
+      ],
+      "type" : "test"
+    },
+    {
+      "c99name" : "PluginEngine",
+      "module_type" : "SwiftTarget",
+      "name" : "PluginEngine",
+      "path" : "Sources/PluginEngine",
+      "product_dependencies" : [
+        "PluginInterface"
+      ],
+      "product_memberships" : [
+        "PluginEngine"
+      ],
+      "sources" : [
+        "Engine/FileUtils.swift",
+        "Engine/PluginEngine.swift",
+        "Engine/PluginUtils.swift",
+        "Errors/FileUtilsErrors.swift",
+        "Errors/PluginErrors.swift",
+        "Errors/RemotePluginLoadingErrors.swift",
+        "Remote/GithubRemorePluginClient.swift",
+        "Remote/RemotePluginLoadingProtocol.swift",
+        "Types/Package.swift"
+      ],
+      "type" : "library"
+    }
+  ],
+  "tools_version" : "5.7"
+}
