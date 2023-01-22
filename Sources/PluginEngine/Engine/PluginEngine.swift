@@ -5,7 +5,9 @@ import SwiftUI
 public class PluginEngine: ObservableObject {
     @Published public private(set) var currentPlugin: (any PluginInterfaceProtocol)?
     @Published public private(set) var plugins: [any PluginInterfaceProtocol] = []
-    @Published public private(set) var remotePluginLoader: (any RemotePluginLoadingProtocol)?
+    @Published public private(set) var remotePluginLoader: (any RemotePluginLoadingProtocol)
+    
+    @Published public private(set) var isLoadingRemote = false
     
     private let fileUtils: FileUtilsProtocol
     private let pluginUtils: PluginUtilsProtocol
@@ -14,9 +16,10 @@ public class PluginEngine: ObservableObject {
      Initialize a plugin engine
      - parameter fileUtils: File utils helper for plguins to interact with the file system
      */
-    public init(fileUtils: FileUtilsProtocol = FileUtils(), pluginUtils: PluginUtilsProtocol = PluginUtils()) {
+    public init(fileUtils: FileUtilsProtocol = FileUtils(), pluginUtils: PluginUtilsProtocol = PluginUtils(), remotePluginLoader: RemotePluginLoadingProtocol = GitHubRemotePluginClient()) {
         self.fileUtils = fileUtils
         self.pluginUtils = pluginUtils
+        self.remotePluginLoader = remotePluginLoader
     }
     
     /**
@@ -28,8 +31,19 @@ public class PluginEngine: ObservableObject {
         plugins.append(plugin)
     }
     
-    public func load(url: String, version: Version) {
-        
+    public func load(url: String, version: Version) async throws -> PluginRepo {
+        isLoadingRemote = true
+        do {
+            guard let url = URL(string: url) else {
+                throw RemotePluginLoadingErrors.invalidURL(url: url)
+            }
+            let repo = try await remotePluginLoader.load(from: url, version: version)
+            load(path: repo.localPosition)
+            return repo
+        } catch {
+            isLoadingRemote = false
+            throw error
+        }
     }
     
     public func use(id: UUID) throws {

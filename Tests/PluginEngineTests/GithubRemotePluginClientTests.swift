@@ -73,6 +73,15 @@ final class GithubRemotePluginClientTests: XCTestCase {
         let callURL = client.calledRequest!.url!.absoluteString
         XCTAssertTrue(callURL.contains("swift-setup/PluginEngine/1.0.0/README.md"))
     }
+    
+    func testGetReadmeWithStringVersion() async throws {
+        let client = TestNetworkClient()
+        let githubClient = GitHubRemotePluginClient(networkClient: client)
+        let readme = try await githubClient.getReadme(from: URL(string: "https://github.com/swift-setup/PluginEngine.git")!, version: "1.1.2")
+        XCTAssertEqual(readme, "Hello world")
+        let callURL = client.calledRequest!.url!.absoluteString
+        XCTAssertTrue(callURL.contains("swift-setup/PluginEngine/1.1.2/README.md"))
+    }
 
     func testGetReadme2() async throws {
         let client = TestNetworkClientWithCount()
@@ -100,6 +109,16 @@ final class GithubRemotePluginClientTests: XCTestCase {
         let zipClient = TestZipClient()
         let githubClient = GitHubRemotePluginClient(networkClient: client, zipClient: zipClient)
         let repo = try await githubClient.load(from: URL(string: "https://github.com/swift-setup/PluginEngine.git")!, version: .init(1, 1, 1))
+        XCTAssertEqual(repo.readme, "Hello world")
+        let localPosition = repo.localPosition
+        XCTAssertTrue(localPosition.contains("b.dylib"))
+    }
+    
+    func testLoadWithStringVersion() async throws {
+        let client = TestNetworkClient()
+        let zipClient = TestZipClient()
+        let githubClient = GitHubRemotePluginClient(networkClient: client, zipClient: zipClient)
+        let repo = try await githubClient.load(from: URL(string: "https://github.com/swift-setup/PluginEngine.git")!, version: "1.1.1")
         XCTAssertEqual(repo.readme, "Hello world")
         let localPosition = repo.localPosition
         XCTAssertTrue(localPosition.contains("b.dylib"))
