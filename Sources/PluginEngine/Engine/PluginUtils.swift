@@ -30,8 +30,8 @@ public struct PluginUtils: PluginUtilsProtocol {
             if sym != nil {
                 let f: InitFunction = unsafeBitCast(sym, to: InitFunction.self)
                 let pluginPointer = f()
-                let builder = Unmanaged<PluginBuilder<Any>>.fromOpaque(pluginPointer).takeRetainedValue()
-                return builder.build(fileUtils: fileUtils)
+                let builder = Unmanaged<PluginBuilder>.fromOpaque(pluginPointer).takeRetainedValue()
+                return builder.build(fileUtils: fileUtils) as! (any PluginUIInterfaceProtocol)
             }
             else {
                 fatalError("error loading lib: symbol \(symbolName) not found, path: \(path)")

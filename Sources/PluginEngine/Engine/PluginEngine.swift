@@ -58,16 +58,16 @@ public class PluginEngine: ObservableObject {
     }
     
     @MainActor
-    public func render() -> any View {
+    public func render() -> AnyView {
         guard let currentPlugin = currentPlugin else {
             //TODO: use handle method to handle the error
-            return EmptyView()
+            return AnyView(EmptyView())
         }
         
         if let plugin = currentPlugin as? (any PluginUIInterfaceProtocol) {
-            return plugin.view
+            return AnyView(plugin.view)
         }
         
-        return Text("Plugin doesn't have a renderer")
+        return AnyView(Text("Plugin doesn't have a renderer"))
     }
 }
