@@ -36,7 +36,8 @@ public class FileUtils: FileUtilsProtocol {
         }
 
         let fm = FileManager.default
-        let items = try fm.contentsOfDirectory(atPath: currentDir.absoluteString)
+        let path = currentDir.absoluteString.replacingOccurrences(of: "file://", with: "")
+        let items = try fm.contentsOfDirectory(atPath: path)
         return items
     }
 

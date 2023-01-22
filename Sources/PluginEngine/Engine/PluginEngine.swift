@@ -64,10 +64,12 @@ public class PluginEngine: ObservableObject {
             return AnyView(EmptyView())
         }
         
-        if let plugin = currentPlugin as? (any PluginUIInterfaceProtocol) {
-            return AnyView(plugin.view)
+        if currentPlugin.view is EmptyView {
+            return AnyView(Text("Plugin doesn't have a renderer"))
         }
         
-        return AnyView(Text("Plugin doesn't have a renderer"))
+        let view = currentPlugin.view as (any View)
+        
+        return AnyView(view)
     }
 }
