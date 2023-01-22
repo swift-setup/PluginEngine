@@ -94,3 +94,20 @@ extension Version: Codable {
         return string
     }
 }
+
+extension Version: ExpressibleByStringLiteral {
+    /// Initializes a version struct with the provided string literal.
+    ///
+    /// - Parameter version: A string literal to use for creating a new version struct.
+    public init(stringLiteral value: String) {
+        // parse the version string
+        let components = value.split(separator: ".")
+        guard components.count >= 3 else {
+            fatalError("Invalid version string: \(value)")
+        }
+        let major = Int(components[0])!
+        let minor = Int(components[1])!
+        let patch = Int(components[2])!
+        self.init(major, minor, patch)
+    }
+}
