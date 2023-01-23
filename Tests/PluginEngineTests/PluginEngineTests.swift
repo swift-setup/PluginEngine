@@ -4,13 +4,13 @@ import SwiftUI
 @testable import PluginInterface
 
 struct TestPlugin: PluginInterfaceProtocol {
-    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test", author: "test", shortDescription: "", repository: "", keywords: [])
+    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test1", author: "test", shortDescription: "", repository: "", keywords: [])
     
     var id: UUID = UUID()
 }
 
 struct TestPlugin2: PluginInterfaceProtocol {
-    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test", author: "test", shortDescription: "", repository: "", keywords: [])
+    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test2", author: "test", shortDescription: "", repository: "", keywords: [])
     
     var id: UUID = UUID()
     
@@ -89,5 +89,25 @@ final class PluginEngineTests: XCTestCase {
         
         XCTAssertEqual(panel.confirmCounter, 0)
         XCTAssertFalse(engine.isLoadingRemote)
+    }
+    
+    func testRemove() throws {
+        let engine = PluginEngine()
+        let plugin = TestPlugin()
+        let plugin2 = TestPlugin2()
+        
+        engine.addPlugin(plugin: plugin)
+        engine.addPlugin(plugin: plugin2)
+        
+        XCTAssertEqual(engine.plugins.count, 2)
+        
+        engine.removePlugin(plugin: plugin)
+        XCTAssertEqual(engine.plugins.count, 1)
+        
+        try engine.use(plugin: plugin2.manifest.bundleIdentifier)
+        XCTAssertEqual(engine.currentPlugin?.manifest.bundleIdentifier, plugin2.manifest.bundleIdentifier)
+        engine.removePlugin(plugin: plugin2)
+        XCTAssertNil(engine.currentPlugin)
+        
     }
 }

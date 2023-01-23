@@ -53,6 +53,19 @@ public extension PluginEngine {
     }
     
     /**
+     This function is removing a plugin from the list of available plugins. It first checks if the plugin being removed is the current plugin and sets it to nil if it is. It then removes all instances of the plugin from the list of available plugins by matching the plugin's bundle identifier.
+     - parameter plugin: The plugin you want to remove
+     */
+    func removePlugin(plugin: any PluginInterfaceProtocol) {
+        if currentPlugin?.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier {
+            currentPlugin = nil
+        }
+        plugins.removeAll { p in
+            p.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier
+        }
+    }
+    
+    /**
      Loads a plugin located at the specified path.
      - parameter path: The file path of the plugin to be loaded.
      - parameter autoConfirm: A boolean value indicating whether or not to automatically confirm the plugin's installation. Default is false.
