@@ -57,16 +57,17 @@ public extension PluginEngine {
      - parameter path: The file path of the plugin to be loaded.
      - parameter autoConfirm: A boolean value indicating whether or not to automatically confirm the plugin's installation. Default is false.
      */
-    func load(path: String, autoConfirm: Bool = false) {
+    func load(path: String, autoConfirm: Bool = false) -> (any PluginInterfaceProtocol)? {
         if !autoConfirm {
             let confirmed = nsPanelUtils.confirm(title: "You are going to load plugin", subtitle: path, confirmButtonText: "confirm", cancelButtonText: "cancel", alertStyle: .critical)
             if !confirmed {
                 nsPanelUtils.alert(title: "Cancelled", subtitle: "Cancelled loading the plugin", okButtonText: "OK", alertStyle: .informational)
-                return
+                return nil
             }
         }
         let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils)
         addPlugin(plugin: plugin)
+        return plugin
     }
     
     /**
@@ -77,15 +78,15 @@ public extension PluginEngine {
      - returns: A PluginRepo object containing the loaded plugin.
      */
     @MainActor
-    func load(url: String, version: Version) async throws -> PluginRepo {
+    func load(url: String, version: Version) async throws -> (PluginRepo, (any PluginInterfaceProtocol)?) {
         isLoadingRemote = true
         do {
             guard let url = URL(string: url) else {
                 throw RemotePluginLoadingErrors.invalidURL(url: url)
             }
             let repo = try await remotePluginLoader.load(from: url, version: version)
-            load(path: repo.localPosition)
-            return repo
+            let plugin = load(path: repo.localPosition)
+            return (repo, plugin)
         } catch {
             isLoadingRemote = false
             throw error
