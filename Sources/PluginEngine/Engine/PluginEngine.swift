@@ -11,15 +11,17 @@ public class PluginEngine: ObservableObject {
     
     private let fileUtils: FileUtilsProtocol
     private let pluginUtils: PluginUtilsProtocol
+    private let nsPanelUtils: NSPanelUtilsProtocol
     
     /**
      Initialize a plugin engine
      - parameter fileUtils: File utils helper for plguins to interact with the file system
      */
-    public init(fileUtils: FileUtilsProtocol = FileUtils(), pluginUtils: PluginUtilsProtocol = PluginUtils(), remotePluginLoader: RemotePluginLoadingProtocol = GitHubRemotePluginClient()) {
+    public init(fileUtils: FileUtilsProtocol = FileUtils(), pluginUtils: PluginUtilsProtocol = PluginUtils(), remotePluginLoader: RemotePluginLoadingProtocol = GitHubRemotePluginClient(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils()) {
         self.fileUtils = fileUtils
         self.pluginUtils = pluginUtils
         self.remotePluginLoader = remotePluginLoader
+        self.nsPanelUtils = nsPanelUtils
     }
     
     func handle() {
@@ -51,14 +53,30 @@ public extension PluginEngine {
     }
     
     /**
-     Load plugin at [path]
-     - parameter path: Plugin path
+     Loads a plugin located at the specified path.
+     - parameter path: The file path of the plugin to be loaded.
+     - parameter autoConfirm: A boolean value indicating whether or not to automatically confirm the plugin's installation. Default is false.
      */
-    func load(path: String) {
-        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils)
+    func load(path: String, autoConfirm: Bool = false) {
+        if !autoConfirm {
+            let confirmed = nsPanelUtils.confirm(title: "You are going to load plugin", subtitle: path, confirmButtonText: "confirm", cancelButtonText: "cancel", alertStyle: .critical)
+            if !confirmed {
+                nsPanelUtils.alert(title: "Cancelled", subtitle: "Cancelled loading the plugin", okButtonText: "OK", alertStyle: .informational)
+                return
+            }
+        }
+        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils)
         addPlugin(plugin: plugin)
     }
     
+    /**
+     Asynchronously loads a plugin from a specified URL and version.
+     - parameter url: The URL from where the plugin should be loaded.
+     - parameter version: The version of the plugin to be loaded.
+     - throws: An error if there is a problem loading the plugin.
+     - returns: A PluginRepo object containing the loaded plugin.
+     */
+    @MainActor
     func load(url: String, version: Version) async throws -> PluginRepo {
         isLoadingRemote = true
         do {

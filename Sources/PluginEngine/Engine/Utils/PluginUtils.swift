@@ -11,13 +11,13 @@ import PluginInterface
 fileprivate typealias InitFunction = @convention(c) () -> UnsafeMutableRawPointer
 
 public protocol PluginUtilsProtocol {
-    func load(at path: String, fileUtils: FileUtilsProtocol) -> any PluginInterfaceProtocol
+    func load(at path: String, fileUtils: FileUtilsProtocol, panelUtils: NSPanelUtilsProtocol) -> any PluginInterfaceProtocol
 }
 
 public struct PluginUtils: PluginUtilsProtocol {
     public init() {}
     
-    public func load(at path: String, fileUtils: FileUtilsProtocol) -> any PluginInterfaceProtocol {
+    public func load(at path: String, fileUtils: FileUtilsProtocol, panelUtils: NSPanelUtilsProtocol) -> any PluginInterfaceProtocol {
         let openRes = dlopen(path, RTLD_NOW|RTLD_LOCAL)
         if openRes != nil {
             defer {
@@ -31,7 +31,7 @@ public struct PluginUtils: PluginUtilsProtocol {
                 let f: InitFunction = unsafeBitCast(sym, to: InitFunction.self)
                 let pluginPointer = f()
                 let builder = Unmanaged<PluginBuilder>.fromOpaque(pluginPointer).takeRetainedValue()
-                return builder.build(fileUtils: fileUtils)
+                return builder.build(fileUtils: fileUtils, nsPanelUtils: panelUtils)
             }
             else {
                 fatalError("error loading lib: symbol \(symbolName) not found, path: \(path)")
