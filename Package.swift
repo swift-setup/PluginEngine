@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/swift-setup/PluginInterface", branch: "main"),
+        .package(url: "https://github.com/swift-setup/PluginInterface", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/ZipArchive/ZipArchive", .upToNextMajor(from: "2.0.0"))
     ],
     targets: [
