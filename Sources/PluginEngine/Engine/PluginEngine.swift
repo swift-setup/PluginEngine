@@ -48,7 +48,7 @@ public class PluginEngine: ObservableObject {
 
 //MARK: load plugin
 public extension PluginEngine {
-    internal func addPlugin(plugin: any PluginInterfaceProtocol) {
+    func addPlugin(plugin: any PluginInterfaceProtocol) {
         plugins.append(plugin)
     }
     
@@ -57,7 +57,7 @@ public extension PluginEngine {
      - parameter path: The file path of the plugin to be loaded.
      - parameter autoConfirm: A boolean value indicating whether or not to automatically confirm the plugin's installation. Default is false.
      */
-    func load(path: String, autoConfirm: Bool = false) -> (any PluginInterfaceProtocol)? {
+    func load(path: String, autoConfirm: Bool = false, autoAdd: Bool = true) -> (any PluginInterfaceProtocol)? {
         if !autoConfirm {
             let confirmed = nsPanelUtils.confirm(title: "You are going to load plugin", subtitle: path, confirmButtonText: "confirm", cancelButtonText: "cancel", alertStyle: .critical)
             if !confirmed {
@@ -66,7 +66,10 @@ public extension PluginEngine {
             }
         }
         let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils)
-        addPlugin(plugin: plugin)
+        
+        if autoAdd {
+            addPlugin(plugin: plugin)
+        }
         return plugin
     }
     
@@ -85,7 +88,7 @@ public extension PluginEngine {
                 throw RemotePluginLoadingErrors.invalidURL(url: url)
             }
             let repo = try await remotePluginLoader.load(from: url, version: version)
-            let plugin = load(path: repo.localPosition)
+            let plugin = load(path: repo.localPosition, autoAdd: false)
             isLoadingRemote = false
             return (repo, plugin)
         } catch {
