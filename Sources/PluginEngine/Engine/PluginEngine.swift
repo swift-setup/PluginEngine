@@ -105,10 +105,12 @@ public extension PluginEngine {
         use(plugin: plugin)
     }
     
-    
+    /**
+     Use bundle identifier
+     */
     func use(plugin name: String) throws {
         let plugin = plugins.first { p in
-            p.pluginName == name
+            p.manifest.bundleIdentifier == name
         }
         guard let plugin = plugin else {
             throw PluginErrors.pluginNotFoundWithName(name: name)

@@ -4,13 +4,13 @@ import SwiftUI
 @testable import PluginInterface
 
 struct TestPlugin: PluginInterfaceProtocol {
-    var pluginName: String = "test-plugin"
+    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test", author: "test", shortDescription: "", repository: "", keywords: [])
     
     var id: UUID = UUID()
 }
 
 struct TestPlugin2: PluginInterfaceProtocol {
-    var pluginName: String = "test-plugin"
+    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test", author: "test", shortDescription: "", repository: "", keywords: [])
     
     var id: UUID = UUID()
     
@@ -78,7 +78,7 @@ final class PluginEngineTests: XCTestCase {
         engine.addPlugin(plugin: plugin)
         engine.addPlugin(plugin: plugin2)
         
-        try engine.use(plugin: plugin.pluginName)
+        try engine.use(plugin: plugin.manifest.bundleIdentifier)
         XCTAssertEqual(plugin.id, engine.currentPlugin?.id)
         _ = await engine.render()
         
