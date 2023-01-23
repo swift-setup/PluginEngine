@@ -50,22 +50,23 @@ final class PluginEngineTests: XCTestCase {
         let pluginUtils = TestPluginUtils()
         let engine = PluginEngine(pluginUtils: pluginUtils, nsPanelUtils: panel)
         
-        engine.load(path: "abc")
+        _ = engine.load(path: "abc")
         
         XCTAssertEqual(panel.confirmCounter, 1)
         XCTAssertEqual(panel.alertCounter, 0)
         
-        engine.load(path: "abc")
+        _ = engine.load(path: "abc")
         
         XCTAssertEqual(panel.confirmCounter, 2)
         XCTAssertEqual(panel.alertCounter, 0)
         
         panel.defaultConfirmResult = false
-        engine.load(path: "abc")
+        _ = engine.load(path: "abc")
         
         XCTAssertEqual(panel.confirmCounter, 3)
         XCTAssertEqual(panel.alertCounter, 1)
         XCTAssertEqual(engine.plugins.count, 2)
+        XCTAssertFalse(engine.isLoadingRemote)
     }
     
     
@@ -87,5 +88,6 @@ final class PluginEngineTests: XCTestCase {
         _ = await engine.render()
         
         XCTAssertEqual(panel.confirmCounter, 0)
+        XCTAssertFalse(engine.isLoadingRemote)
     }
 }

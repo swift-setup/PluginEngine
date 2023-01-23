@@ -86,6 +86,7 @@ public extension PluginEngine {
             }
             let repo = try await remotePluginLoader.load(from: url, version: version)
             let plugin = load(path: repo.localPosition)
+            isLoadingRemote = false
             return (repo, plugin)
         } catch {
             isLoadingRemote = false
