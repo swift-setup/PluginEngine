@@ -52,6 +52,11 @@ public extension PluginEngine {
         plugins.append(plugin)
     }
     
+    func addPluginBuilder(builder: PluginBuilder) {
+        let plugin = builder.build(fileUtils: self.fileUtils, nsPanelUtils: self.nsPanelUtils)
+        addPlugin(plugin: plugin)
+    }
+    
     /**
      This function is removing a plugin from the list of available plugins. It first checks if the plugin being removed is the current plugin and sets it to nil if it is. It then removes all instances of the plugin from the list of available plugins by matching the plugin's bundle identifier.
      - parameter plugin: The plugin you want to remove
