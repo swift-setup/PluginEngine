@@ -10,7 +10,7 @@ import Foundation
 import PluginInterface
 
 public class FileUtils: ObservableObject, FileUtilsProtocol {
-    public internal(set) var currentWorkSpace: URL?
+    @Published public internal(set) var currentWorkSpace: URL?
     
     public var currentWorkSpacePath: String? {
         get {
@@ -59,6 +59,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         try self.delete(at: fileURL)
     }
 
+    @MainActor
     public func updateCurrentWorkSpace() throws -> URL {
         let dialog = NSOpenPanel()
         dialog.title = "Choose a folder"
