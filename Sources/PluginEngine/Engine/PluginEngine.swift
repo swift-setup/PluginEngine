@@ -9,18 +9,22 @@ public class PluginEngine: ObservableObject {
     
     @Published public private(set) var isLoadingRemote = false
     
-    private let fileUtils: FileUtilsProtocol
+    private var fileUtils: FileUtilsProtocol!
+    private var nsPanelUtils: NSPanelUtilsProtocol!
     private let pluginUtils: PluginUtilsProtocol
-    private let nsPanelUtils: NSPanelUtilsProtocol
+
     
     /**
      Initialize a plugin engine
      - parameter fileUtils: File utils helper for plguins to interact with the file system
      */
-    public init(fileUtils: FileUtilsProtocol = FileUtils(), pluginUtils: PluginUtilsProtocol = PluginUtils(), remotePluginLoader: RemotePluginLoadingProtocol = GitHubRemotePluginClient(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils()) {
-        self.fileUtils = fileUtils
+    public init(pluginUtils: PluginUtilsProtocol = PluginUtils(), remotePluginLoader: RemotePluginLoadingProtocol = GitHubRemotePluginClient()) {
         self.pluginUtils = pluginUtils
         self.remotePluginLoader = remotePluginLoader
+    }
+    
+    public func setup(fileUtils: FileUtilsProtocol = FileUtils(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils()) {
+        self.fileUtils = fileUtils
         self.nsPanelUtils = nsPanelUtils
     }
     
@@ -50,6 +54,11 @@ public class PluginEngine: ObservableObject {
 public extension PluginEngine {
     func addPlugin(plugin: any PluginInterfaceProtocol) {
         plugins.append(plugin)
+    }
+    
+    func addPluginBuilder(builder: PluginBuilder) {
+        let plugin = builder.build(fileUtils: self.fileUtils, nsPanelUtils: self.nsPanelUtils)
+        addPlugin(plugin: plugin)
     }
     
     /**

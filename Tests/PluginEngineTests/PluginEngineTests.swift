@@ -48,7 +48,8 @@ final class PluginEngineTests: XCTestCase {
     func testLoadWithConfirm() async throws {
         let panel = TestNSPanel(defaultConfirmResult: true)
         let pluginUtils = TestPluginUtils()
-        let engine = PluginEngine(pluginUtils: pluginUtils, nsPanelUtils: panel)
+        let engine = PluginEngine(pluginUtils: pluginUtils)
+        engine.setup(nsPanelUtils: panel)
         
         _ = engine.load(path: "abc")
         
@@ -72,7 +73,8 @@ final class PluginEngineTests: XCTestCase {
     
     func testRender() async throws {
         let panel = TestNSPanel(defaultConfirmResult: true)
-        let engine = PluginEngine(nsPanelUtils: panel)
+        let engine = PluginEngine()
+        engine.setup(nsPanelUtils: panel)
         let plugin = TestPlugin()
         let plugin2 = TestPlugin2()
         
