@@ -11,6 +11,7 @@ public class PluginEngine: ObservableObject {
     
     private var fileUtils: FileUtilsProtocol!
     private var nsPanelUtils: NSPanelUtilsProtocol!
+    private var storeUtils: StoreUtilsProtocol!
     private let pluginUtils: PluginUtilsProtocol
 
     
@@ -23,9 +24,10 @@ public class PluginEngine: ObservableObject {
         self.remotePluginLoader = remotePluginLoader
     }
     
-    public func setup(fileUtils: FileUtilsProtocol = FileUtils(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils()) {
+    public func setup(fileUtils: FileUtilsProtocol = FileUtils(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils(), storeUtils: StoreUtilsProtocol = UserDefaultStore()) {
         self.fileUtils = fileUtils
         self.nsPanelUtils = nsPanelUtils
+        self.storeUtils = storeUtils
     }
     
     func handle() {
@@ -57,7 +59,7 @@ public extension PluginEngine {
     }
     
     func addPluginBuilder(builder: PluginBuilder) {
-        let plugin = builder.build(fileUtils: self.fileUtils, nsPanelUtils: self.nsPanelUtils)
+        let plugin = builder.build(fileUtils: self.fileUtils, nsPanelUtils: self.nsPanelUtils, storeUtils: storeUtils)
         addPlugin(plugin: plugin)
     }
     
@@ -87,7 +89,7 @@ public extension PluginEngine {
                 return nil
             }
         }
-        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils)
+        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils, storeUtils: storeUtils)
         
         if autoAdd {
             addPlugin(plugin: plugin)
