@@ -10,15 +10,18 @@ import Foundation
 import PluginInterface
 
 public class FileUtils: ObservableObject, FileUtilsProtocol {
-    public private(set) var currentWorkSpace: URL?
+    public internal(set) var currentWorkSpace: URL?
     
     public var currentWorkSpacePath: String? {
         get {
             currentWorkSpace?.absoluteFilePath
         }
     }
+    private let fm: FileManager
     
-    public init() {}
+    public init(fm: FileManager = FileManager.default) {
+        self.fm = fm
+    }
     
     public func openFile(at path: String) throws -> Data {
         guard let currentDir = currentWorkSpace else {
@@ -72,16 +75,36 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         throw FileUtilsErrors.userCancelled
     }
 
-    public func list() throws -> [String] {
+    public func list(includes: [String]) throws -> [String] {
         guard let currentWorkSpace = currentWorkSpace else {
             throw FileUtilsErrors.noSelectedDir
         }
-
-        let fm = FileManager.default
+        
         guard let path = currentWorkSpace.absoluteFilePath else {
             throw FileUtilsErrors.invalidFileURL(url: currentWorkSpace)
         }
-        let items = try fm.contentsOfDirectory(atPath: path)
+        
+        var items: [String] = []
+        var paths: [String] = [path]
+        paths.append(contentsOf: includes)
+        
+        for path in paths {
+            if path.contains(currentWorkSpacePath!) {
+                let filesIndir = try fm.contentsOfDirectory(atPath: path)
+                items.append(contentsOf: filesIndir)
+            } else {
+                let newPath = currentWorkSpace.appending(path: path)
+                guard let filePath = newPath.absoluteFilePath else {
+                    throw FileUtilsErrors.invalidFileURL(url: newPath)
+                }
+                let filesIndir = try fm.contentsOfDirectory(atPath: filePath)
+                items.append(contentsOf: filesIndir.map {
+                    var url = URL(filePath: path)
+                    url = url.appending(path: $0)
+                    return url.absoluteString.replacingOccurrences(of: "file:///", with: "")
+                })
+            }
+        }
         return items
     }
 
@@ -96,22 +119,26 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-        try content.write(to: path, atomically: true, encoding: .utf8)
+        try createDirs(at: path)
+        try! content.write(to: path, atomically: true, encoding: .utf8)
     }
 
     public func createDirs(at path: URL) throws {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-        let fm = FileManager.default
-        try fm.createDirectory(at: path, withIntermediateDirectories: true, attributes: nil)
+        var targetURL = path
+        if path.isDirectory {
+            targetURL = targetURL.deletingLastPathComponent()
+        }
+        
+        try fm.createDirectory(at: targetURL, withIntermediateDirectories: true, attributes: nil)
     }
 
     public func delete(at path: URL) throws {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-        let fm = FileManager.default
         try fm.removeItem(at: path)
     }
 }

@@ -19,4 +19,11 @@ public extension URL {
             return nil
         }
     }
+    
+    /**
+     Returns true if url is a directory
+     */
+    var isDirectory: Bool {
+        return !pathExtension.isEmpty
+    }
 }
