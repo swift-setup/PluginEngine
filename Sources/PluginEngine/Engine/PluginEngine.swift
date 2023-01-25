@@ -33,22 +33,6 @@ public class PluginEngine: ObservableObject {
     func handle() {
         //TODO: Add handling method which will handle the event using plugins
     }
-    
-    @MainActor
-    public func render() -> AnyView {
-        guard let currentPlugin = currentPlugin else {
-            //TODO: use handle method to handle the error
-            return AnyView(EmptyView())
-        }
-        
-        if currentPlugin.view is EmptyView {
-            return AnyView(Text("Plugin doesn't have a renderer"))
-        }
-        
-        let view = currentPlugin.view as (any View)
-        
-        return AnyView(view)
-    }
 }
 
 
@@ -151,5 +135,42 @@ public extension PluginEngine {
         plugin.setup()
         plugin.onUse()
         currentPlugin = plugin
+    }
+}
+
+//MARK: render
+
+public extension PluginEngine {
+    @MainActor
+    func render() -> AnyView {
+        guard let currentPlugin = currentPlugin else {
+            //TODO: use handle method to handle the error
+            return AnyView(EmptyView())
+        }
+        
+        if currentPlugin.view is EmptyView {
+            return AnyView(Text("Plugin doesn't have a renderer"))
+        }
+        
+        let view = currentPlugin.view as (any View)
+        
+        return AnyView(view)
+    }
+    
+    @MainActor
+    @ViewBuilder
+    func renderSettings() -> some View {
+        TabView {
+            ForEach(plugins, id: \.manifest.bundleIdentifier) { plugin in
+                if !(plugin.settings is EmptyView){
+                    let view = plugin.settings as (any View)
+                    AnyView(view)
+                        .padding()
+                        .tabItem {
+                            Label(plugin.manifest.displayName, systemImage: plugin.manifest.systemImageName ?? "info.circle.fill")
+                        }
+                }
+            }
+        }
     }
 }

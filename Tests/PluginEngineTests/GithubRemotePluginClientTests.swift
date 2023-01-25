@@ -6,6 +6,7 @@
 //
 
 @testable import PluginEngine
+import PluginInterface
 import XCTest
 
 class TestNetworkClient: NetworkRequestProtocol {
@@ -41,6 +42,20 @@ class TestNetworkClientWithCount: NetworkRequestProtocol {
     }
 }
 
+class TestVersionNetworkClient: NetworkRequestProtocol {
+    var calledRequest: URLRequest?
+
+    func getRequest(for request: URLRequest) async throws -> (Data, URLResponse) {
+        calledRequest = request
+        let versions: [GetGithubReleaseDto] = [
+            GetGithubReleaseDto(tagName: "v1.0.0"),
+            GetGithubReleaseDto(tagName: "v1.0.1"),
+        ]
+        
+        return (try! JSONEncoder().encode(versions), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+    }
+}
+
 class TestZipClient: ZipProtocol {
     func unzipFileAtPath(_: String, toDestination _: String) {}
 
@@ -54,6 +69,20 @@ class TestZipClientError: ZipProtocol {
 
     func contentsOfDirectory(atPath _: String) throws -> [String] {
         ["a.readme"]
+    }
+}
+
+class MockStore: StoreUtilsProtocol {
+    func set(_ value: Any?, forKey defaultName: String, from plugin: (any PluginInterfaceProtocol)?) {
+        
+    }
+    
+    func removeObject(forKey defaultName: String, from plugin: (any PluginInterfaceProtocol)?) {
+        
+    }
+    
+    func get<T>(forKey defaultName: String, from plugin: (any PluginInterfaceProtocol)?) -> T? {
+        return "TOKEN" as? T
     }
 }
 
@@ -143,5 +172,14 @@ final class GithubRemotePluginClientTests: XCTestCase {
         XCTAssertEqual(repo.readme, "Hello world")
         let localPosition = repo.localPosition
         XCTAssertTrue(localPosition.contains("b.dylib"))
+    }
+    
+    func testFetchVersions() async throws {
+        let client = TestVersionNetworkClient()
+        let store = MockStore()
+        let githubClient = GitHubRemotePluginClient(networkClient: client, store: store)
+        let versions = try await githubClient.versions(from: URL(string: "https://github.com/swift-setup/PluginEngine.git")!)
+        XCTAssertEqual(versions.count, 2)
+        XCTAssertEqual(client.calledRequest!.url!.absoluteString, "https://api.github.com/repos/swift-setup/PluginEngine/releases")
     }
 }

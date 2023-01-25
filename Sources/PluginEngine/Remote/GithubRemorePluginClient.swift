@@ -7,6 +7,7 @@
 
 import Foundation
 import ZipArchive
+import PluginInterface
 
 public protocol NetworkRequestProtocol {
     func getRequest(for request: URLRequest) async throws -> (Data, URLResponse)
@@ -26,6 +27,14 @@ public struct NetworkClient: NetworkRequestProtocol {
     }
 }
 
+public struct GetGithubReleaseDto: Codable {
+    let tagName: String
+    
+    enum CodingKeys: String, CodingKey {
+        case tagName = "tag_name"
+    }
+}
+
 public struct ZipClient: ZipProtocol {
     public init() {}
     
@@ -42,11 +51,31 @@ public struct ZipClient: ZipProtocol {
 public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
     let networkClient: NetworkRequestProtocol
     let zipClient: ZipProtocol
+    let store: StoreUtilsProtocol
+    let githubTokenKeyName = "GITHUB_TOKEN"
     
-    public init(networkClient: NetworkRequestProtocol = NetworkClient(), zipClient: ZipProtocol = ZipClient()) {
+    public init(networkClient: NetworkRequestProtocol = NetworkClient(), zipClient: ZipProtocol = ZipClient(), store: StoreUtilsProtocol = UserDefaultStore()) {
         self.networkClient = networkClient
         self.zipClient = zipClient
+        self.store = store
     }
+    
+    public func versions(from url: URL) async throws -> [Version] {
+        let repoName = getRepoName(from: url.absoluteString)!
+        let baseURL = URL(string: "https://api.github.com/repos")!
+        let token: String? = store.get(forKey: githubTokenKeyName, from: nil)
+        guard let token = token else {
+            throw RemotePluginLoadingErrors.missingToken(key: githubTokenKeyName)
+        }
+        
+        var request = URLRequest(url: baseURL.appending(path: repoName).appending(path: "releases"))
+        request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
+        let (data, _) = try await networkClient.getRequest(for: request)
+        let versionResp = try JSONDecoder().decode([GetGithubReleaseDto].self, from: data)
+        
+        return versionResp.map { Version(stringLiteral: $0.tagName) } 
+    }
+    
     
     
     public func load(from remote: URL, version: Version) async throws -> PluginRepo {

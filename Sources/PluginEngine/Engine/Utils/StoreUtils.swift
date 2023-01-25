@@ -8,7 +8,7 @@
 import Foundation
 import PluginInterface
 
-public class UserDefaultStore: StoreUtilsProtocol {
+public class UserDefaultStore: ObservableObject, StoreUtilsProtocol {
     internal let store = UserDefaults.standard
     
     public init() {}

@@ -13,6 +13,7 @@ public enum RemotePluginLoadingErrors: LocalizedError {
     case noDylibFound
     case invalidArch
     case invalidURL(url: String)
+    case missingToken(key: String)
     
     public var errorDescription: String? {
         switch self {
@@ -30,6 +31,8 @@ public enum RemotePluginLoadingErrors: LocalizedError {
                 
             case .invalidArch:
                 return "Unknown system arch"
+            case .missingToken(let key):
+                return "Missing token: \(key)"
         }
     }
 }
