@@ -97,7 +97,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
                 guard let filePath = newPath.absoluteFilePath else {
                     throw FileUtilsErrors.invalidFileURL(url: newPath)
                 }
-                let filesIndir = try fm.contentsOfDirectory(atPath: filePath)
+                let filesIndir = (try? fm.contentsOfDirectory(atPath: filePath)) ?? []
                 items.append(contentsOf: filesIndir.map {
                     var url = URL(filePath: path)
                     url = url.appending(path: $0)
