@@ -9,7 +9,7 @@ import AppKit
 import Foundation
 import PluginInterface
 
-public class FileUtils: FileUtilsProtocol {
+public class FileUtils: ObservableObject, FileUtilsProtocol {
     public private(set) var currentWorkSpace: URL?
     
     public var currentWorkSpacePath: String? {

@@ -10,7 +10,7 @@ import AppKit
 import PluginInterface
 
 
-public class NSPanelUtils: NSPanelUtilsProtocol {
+public class NSPanelUtils: ObservableObject, NSPanelUtilsProtocol {
     public init() {}
     
     public func confirm(title: String, subtitle: String, confirmButtonText: String? = "Confirm", cancelButtonText: String? = "Cancel", alertStyle: NSAlert.Style? = .informational) -> Bool {
