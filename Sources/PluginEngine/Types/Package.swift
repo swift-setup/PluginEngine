@@ -22,6 +22,8 @@ public struct Version {
 
     /// The build metadata of this version according to the semantic versioning standard, such as a commit hash.
     public let buildMetadataIdentifiers: [String]
+    
+    public let startsWithV: Bool
 
     /// Initializes a version struct with the provided components of a semantic version.
     ///
@@ -35,13 +37,14 @@ public struct Version {
     /// - Precondition: `major >= 0 && minor >= 0 && patch >= 0`.
     /// - Precondition: `prereleaseIdentifiers` can contain only ASCII alpha-numeric characters and "-".
     /// - Precondition: `buildMetaDataIdentifiers` can contain only ASCII alpha-numeric characters and "-".
-    public init(_ major: Int, _ minor: Int, _ patch: Int, prereleaseIdentifiers _: [String] = [], buildMetadataIdentifiers _: [String] = []) {
+    public init(_ major: Int, _ minor: Int, _ patch: Int, prereleaseIdentifiers _: [String] = [], buildMetadataIdentifiers _: [String] = [], startsWithV: Bool = false) {
         precondition(major >= 0 && minor >= 0 && patch >= 0, "Version components must be non-negative")
         self.major = major
         self.minor = minor
         self.patch = patch
         prereleaseIdentifiers = []
         buildMetadataIdentifiers = []
+        self.startsWithV = startsWithV
     }
 }
 
@@ -83,13 +86,17 @@ extension Version: Comparable {
 }
 
 extension Version: Codable {
-    func toString() -> String {
+    public func toString() -> String {
         var string = "\(major).\(minor).\(patch)"
         if !prereleaseIdentifiers.isEmpty {
             string += "-" + prereleaseIdentifiers.joined(separator: ".")
         }
         if !buildMetadataIdentifiers.isEmpty {
             string += "+" + buildMetadataIdentifiers.joined(separator: ".")
+        }
+        
+        if startsWithV {
+            string = "v" + string
         }
         return string
     }
@@ -105,9 +112,16 @@ extension Version: ExpressibleByStringLiteral {
         guard components.count >= 3 else {
             fatalError("Invalid version string: \(value)")
         }
-        let major = Int(components[0])!
+        var firstComponent: String = String(components[0])
+        var startsWithV = false
+        if firstComponent.lowercased().contains("v") {
+            startsWithV = true
+            firstComponent = firstComponent.lowercased().replacingOccurrences(of: "v", with: "")
+        }
+        
+        let major = Int(firstComponent)!
         let minor = Int(components[1])!
         let patch = Int(components[2])!
-        self.init(major, minor, patch)
+        self.init(major, minor, patch, startsWithV: startsWithV)
     }
 }

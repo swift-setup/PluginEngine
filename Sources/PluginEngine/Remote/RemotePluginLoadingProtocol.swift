@@ -17,4 +17,6 @@ public protocol RemotePluginLoadingProtocol {
      - returns Downloaded path
      */
     func load(from url: URL, version: Version) async throws -> PluginRepo
+    
+    func versions(from url: URL) async throws -> [Version]
 }

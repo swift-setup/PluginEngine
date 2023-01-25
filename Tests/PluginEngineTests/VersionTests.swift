@@ -15,4 +15,13 @@ final class VersionTests: XCTestCase {
         XCTAssertEqual(version.minor, 0)
         XCTAssertEqual(version.patch, 0)
     }
+    
+    func testVersion2() throws {
+        let version: Version = "v1.0.0"
+        XCTAssertEqual(version.major, 1)
+        XCTAssertEqual(version.minor, 0)
+        XCTAssertEqual(version.patch, 0)
+        
+        XCTAssertEqual(version.toString(), "v1.0.0")
+    }
 }
