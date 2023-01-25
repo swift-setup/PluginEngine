@@ -161,7 +161,7 @@ final class GithubRemotePluginClientTests: XCTestCase {
         XCTAssertTrue(url.lowercased() == url)
         XCTAssertEqual(repo.readme, "Hello world")
         let localPosition = repo.localPosition
-        XCTAssertTrue(localPosition.contains("b.dylib"))
+        XCTAssertTrue(localPosition.contains("1.1.1/b.dylib"))
     }
     
     func testLoadWithStringVersion() async throws {
