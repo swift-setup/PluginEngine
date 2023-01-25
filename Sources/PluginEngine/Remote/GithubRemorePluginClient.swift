@@ -90,7 +90,7 @@ public struct GitHubRemotePluginClient: RemotePluginLoadingProtocol {
         
         // unzip to document directory
         let repoName = getRepoName(from: remote.absoluteString)!
-        let destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(repoName).path
+        let destination = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(repoName).appendingPathComponent(version.toString()).path
         let dylibFile = try unzip(downloadPath, toDestination: destination)
         
         return PluginRepo(localPosition: dylibFile, readme: readme ?? "No content", version: version)
