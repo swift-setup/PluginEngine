@@ -13,7 +13,7 @@ public class PluginEngine: ObservableObject {
     private var nsPanelUtils: NSPanelUtilsProtocol!
     private var storeUtils: StoreUtilsProtocol!
     private let pluginUtils: PluginUtilsProtocol
-
+    
     
     /**
      Initialize a plugin engine
@@ -149,6 +149,16 @@ public extension PluginEngine {
         }
         
         if currentPlugin.view is EmptyView {
+            if !(currentPlugin.settings is EmptyView) {
+                return AnyView(
+                    VStack {
+                        Text("This plugin offers a preference page")
+                        Button("Open preference") {
+                            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                        }
+                    })
+            }
+            
             return AnyView(Text("Plugin doesn't have a renderer"))
         }
         
