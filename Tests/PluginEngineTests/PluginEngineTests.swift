@@ -39,7 +39,7 @@ class TestNSPanel: NSPanelUtilsProtocol {
 }
 
 class TestPluginUtils: PluginUtilsProtocol {
-    func load(at path: String, fileUtils: PluginInterface.FileUtilsProtocol, panelUtils: PluginInterface.NSPanelUtilsProtocol) -> any PluginInterfaceProtocol {
+    func load(at path: String, fileUtils: PluginInterface.FileUtilsProtocol, panelUtils: PluginInterface.NSPanelUtilsProtocol, storeUtils: StoreUtilsProtocol) -> any PluginInterfaceProtocol {
         TestPlugin()
     }
 }
