@@ -9,6 +9,7 @@ import Foundation
 
 public enum PluginErrors: LocalizedError {
     case pluginNotFoundWithId(id: UUID)
+    case pluginNotFoundWithBundleId(id: String)
     case pluginNotFoundWithName(name: String)
 
     public var errorDescription: String? {
@@ -17,6 +18,8 @@ public enum PluginErrors: LocalizedError {
                 return "Cannot found plugin with id: \(id)"
             case .pluginNotFoundWithName(let name):
                 return "Cannot found plugin with name: \(name)"
+            case .pluginNotFoundWithBundleId(let id):
+                return "Cannot found plugin with id: \(id)"
         }
     }
 }

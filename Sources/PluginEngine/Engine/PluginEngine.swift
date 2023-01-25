@@ -60,6 +60,17 @@ public extension PluginEngine {
         }
     }
     
+    @MainActor
+    func removePlugin(bundleId: String) throws {
+        guard let index = plugins.firstIndex(where: { p in
+            p.manifest.bundleIdentifier == bundleId
+        }) else {
+            throw PluginErrors.pluginNotFoundWithBundleId(id: bundleId)
+        }
+        
+        plugins.remove(at: index)
+    }
+    
     /**
      Loads a plugin located at the specified path.
      - parameter path: The file path of the plugin to be loaded.
@@ -96,6 +107,32 @@ public extension PluginEngine {
                 throw RemotePluginLoadingErrors.invalidURL(url: url)
             }
             let repo = try await remotePluginLoader.load(from: url, version: version)
+            let plugin = load(path: repo.localPosition, autoAdd: false)
+            isLoadingRemote = false
+            return (repo, plugin)
+        } catch {
+            isLoadingRemote = false
+            throw error
+        }
+    }
+    
+    /**
+     Asynchronously updates a plugin from a specified URL and version.
+     - parameter bundleId: Previous plugin's bundle id
+     - parameter url: The URL from where the plugin should be loaded.
+     - parameter version: The version of the plugin to be loaded.
+     - throws: An error if there is a problem loading the plugin.
+     - returns: A PluginRepo object containing the loaded plugin.
+     */
+    @MainActor
+    func update(bundleId: String, url: String, version: Version) async throws -> (PluginRepo, (any PluginInterfaceProtocol)?) {
+        isLoadingRemote = true
+        do {
+            guard let url = URL(string: url) else {
+                throw RemotePluginLoadingErrors.invalidURL(url: url)
+            }
+            let repo = try await remotePluginLoader.load(from: url, version: version)
+            try removePlugin(bundleId: bundleId)
             let plugin = load(path: repo.localPosition, autoAdd: false)
             isLoadingRemote = false
             return (repo, plugin)
