@@ -18,6 +18,7 @@ class MockFileManager: FileManager {
     override func contentsOfDirectory(atPath path: String) throws -> [String] {
         return ["a", "b"]
     }
+    
 }
 
 final class FileUtilsTests: XCTestCase {
@@ -25,7 +26,7 @@ final class FileUtilsTests: XCTestCase {
     func testCreateDirs() throws {
         let fm = MockFileManager()
         let utils = FileUtils(fm: fm)
-        try utils.createDirs(at: URL(filePath: "/usr/files/a.yaml"))
+        try utils.createDirs(at: URL(filePath: "/usr/files/"))
         XCTAssertEqual(fm.writtenURL?.absoluteFilePath, "/usr/files/")
         
         try utils.createDirs(at: URL(filePath: "/usr/files2/"))
@@ -53,5 +54,4 @@ final class FileUtilsTests: XCTestCase {
         let items = try utils.list(includes: [])
         XCTAssertEqual(items.count, 2)
     }
-
 }
