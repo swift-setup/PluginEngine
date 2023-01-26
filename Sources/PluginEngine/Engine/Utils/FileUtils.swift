@@ -122,6 +122,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
+         try fm.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
          fm.createFile(atPath: path.absoluteFilePath!, contents: content.data(using: .utf8))
     }
 
