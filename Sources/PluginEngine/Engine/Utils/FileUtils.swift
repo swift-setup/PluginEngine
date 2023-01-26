@@ -65,6 +65,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         dialog.title = "Choose a folder"
         dialog.canChooseFiles = false
         dialog.canChooseDirectories = true
+        dialog.canCreateDirectories = true
 
         if dialog.runModal() == .OK {
             if let result = dialog.url {
