@@ -44,6 +44,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !fileURL.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: fileURL)
         }
+        
         try self.writeFile(at: fileURL, with: content)
     }
     
@@ -65,6 +66,7 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         dialog.title = "Choose a folder"
         dialog.canChooseFiles = false
         dialog.canChooseDirectories = true
+        dialog.canCreateDirectories = true
 
         if dialog.runModal() == .OK {
             if let result = dialog.url {
@@ -120,20 +122,15 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-        try createDirs(at: path)
-        try! content.write(to: path, atomically: true, encoding: .utf8)
+         try fm.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
+         fm.createFile(atPath: path.absoluteFilePath!, contents: content.data(using: .utf8))
     }
 
     public func createDirs(at path: URL) throws {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-        var targetURL = path
-        if path.isDirectory {
-            targetURL = targetURL.deletingLastPathComponent()
-        }
-        
-        try fm.createDirectory(at: targetURL, withIntermediateDirectories: true, attributes: nil)
+        try fm.createDirectory(at: path, withIntermediateDirectories: true, attributes: nil)
     }
 
     public func delete(at path: URL) throws {
