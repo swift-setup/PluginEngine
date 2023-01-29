@@ -8,21 +8,21 @@
 import AppKit
 import Foundation
 import PluginInterface
+import UniformTypeIdentifiers
 
 public class FileUtils: ObservableObject, FileUtilsProtocol {
     @Published public internal(set) var currentWorkSpace: URL?
-    
+
     public var currentWorkSpacePath: String? {
-        get {
-            currentWorkSpace?.absoluteFilePath
-        }
+        currentWorkSpace?.absoluteFilePath
     }
+
     private let fm: FileManager
-    
+
     public init(fm: FileManager = FileManager.default) {
         self.fm = fm
     }
-    
+
     public func openFile(at path: String) throws -> Data {
         guard let currentDir = currentWorkSpace else {
             throw FileUtilsErrors.noSelectedDir
@@ -31,33 +31,33 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !fileURL.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: fileURL)
         }
-        
+
         return try Data(contentsOf: fileURL)
     }
-    
+
     public func writeFile(at path: String, with content: String) throws {
         guard let currentDir = currentWorkSpace else {
             throw FileUtilsErrors.noSelectedDir
         }
-        
+
         let fileURL = currentDir.appending(component: path)
         if !fileURL.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: fileURL)
         }
-        
-        try self.writeFile(at: fileURL, with: content)
+
+        try writeFile(at: fileURL, with: content)
     }
-    
+
     public func delete(at path: String) throws {
         guard let currentDir = currentWorkSpace else {
             throw FileUtilsErrors.noSelectedDir
         }
-        
+
         let fileURL = currentDir.appending(component: path)
         if !fileURL.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: fileURL)
         }
-        try self.delete(at: fileURL)
+        try delete(at: fileURL)
     }
 
     @MainActor
@@ -82,15 +82,15 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         guard let currentWorkSpace = currentWorkSpace else {
             throw FileUtilsErrors.noSelectedDir
         }
-        
+
         guard let path = currentWorkSpace.absoluteFilePath else {
             throw FileUtilsErrors.invalidFileURL(url: currentWorkSpace)
         }
-        
+
         var items: [String] = []
         var paths: [String] = [path]
         paths.append(contentsOf: includes)
-        
+
         for path in paths {
             if path.contains(currentWorkSpacePath!) {
                 let filesIndir = try fm.contentsOfDirectory(atPath: path)
@@ -122,8 +122,8 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
         if !path.isFileURL {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
-         try fm.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
-         fm.createFile(atPath: path.absoluteFilePath!, contents: content.data(using: .utf8))
+        try fm.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
+        fm.createFile(atPath: path.absoluteFilePath!, contents: content.data(using: .utf8))
     }
 
     public func createDirs(at path: URL) throws {
@@ -138,5 +138,58 @@ public class FileUtils: ObservableObject, FileUtilsProtocol {
             throw FileUtilsErrors.invalidFileURL(url: path)
         }
         try fm.removeItem(at: path)
+    }
+
+    public func showOpenFilePanel(allowedFileTypes: [UTType]) throws -> URL {
+        let dialog = NSOpenPanel()
+        dialog.title = "Choose a file"
+        dialog.canChooseFiles = true
+        dialog.canChooseDirectories = false
+        dialog.canCreateDirectories = false
+        dialog.allowsMultipleSelection = false
+        dialog.allowedContentTypes = allowedFileTypes
+
+        if dialog.runModal() == .OK {
+            if let result = dialog.url {
+                return result
+            }
+        }
+
+        throw FileUtilsErrors.userCancelled
+    }
+
+    public func showSaveFilePanel(allowedFileTypes: [UTType], defaultFileName: String) throws -> URL {
+        let dialog = NSSavePanel()
+        dialog.title = "Choose a file"
+        dialog.canCreateDirectories = true
+        dialog.allowedContentTypes = allowedFileTypes
+        dialog.nameFieldStringValue = defaultFileName
+
+        if dialog.runModal() == .OK {
+            if let result = dialog.url {
+                return result
+            }
+        }
+
+        throw FileUtilsErrors.userCancelled
+    }
+
+    public func writeFile(at path: URL, with content: Data) throws {
+        if !path.isFileURL {
+            throw FileUtilsErrors.invalidFileURL(url: path)
+        }
+        try fm.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
+        fm.createFile(atPath: path.absoluteFilePath!, contents: content)
+    }
+
+    public func writeFile(at path: String, with content: Data) throws {
+        guard let currentDir = currentWorkSpace else {
+            throw FileUtilsErrors.noSelectedDir
+        }
+        let fileURL = currentDir.appending(component: path)
+        if !fileURL.isFileURL {
+            throw FileUtilsErrors.invalidFileURL(url: fileURL)
+        }
+        try writeFile(at: fileURL, with: content)
     }
 }
