@@ -39,6 +39,10 @@ public class PluginEngine: ObservableObject {
 //MARK: load plugin
 public extension PluginEngine {
     func addPlugin(plugin: any PluginInterfaceProtocol) {
+        if let previousPlugin = plugins.first(where: { $0.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier }) {
+            return
+        }
+        
         plugins.append(plugin)
     }
     
