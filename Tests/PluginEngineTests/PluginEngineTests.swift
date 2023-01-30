@@ -19,6 +19,17 @@ struct TestPlugin2: PluginInterfaceProtocol {
     }
 }
 
+struct TestPlugin3: PluginInterfaceProtocol {
+    var manifest: ProjectManifest = ProjectManifest(displayName: "test", bundleIdentifier: "test1", author: "test", shortDescription: "", repository: "", keywords: [])
+    
+    var id: UUID = UUID()
+    
+    var body: some View {
+        Text("Hello world")
+    }
+}
+
+
 class TestNSPanel: NSPanelUtilsProtocol {
     var confirmCounter = 0
     var alertCounter = 0
@@ -40,7 +51,9 @@ class TestNSPanel: NSPanelUtilsProtocol {
 
 class TestPluginUtils: PluginUtilsProtocol {
     func load(at path: String, fileUtils: PluginInterface.FileUtilsProtocol, panelUtils: PluginInterface.NSPanelUtilsProtocol, storeUtils: StoreUtilsProtocol) -> any PluginInterfaceProtocol {
-        TestPlugin()
+        var plugin = TestPlugin()
+        plugin.manifest.bundleIdentifier = path
+        return plugin
     }
 }
 
@@ -56,13 +69,13 @@ final class PluginEngineTests: XCTestCase {
         XCTAssertEqual(panel.confirmCounter, 1)
         XCTAssertEqual(panel.alertCounter, 0)
         
-        _ = engine.load(path: "abc")
+        _ = engine.load(path: "abc2")
         
         XCTAssertEqual(panel.confirmCounter, 2)
         XCTAssertEqual(panel.alertCounter, 0)
         
         panel.defaultConfirmResult = false
-        _ = engine.load(path: "abc")
+        _ = engine.load(path: "abc3")
         
         XCTAssertEqual(panel.confirmCounter, 3)
         XCTAssertEqual(panel.alertCounter, 1)
@@ -111,5 +124,18 @@ final class PluginEngineTests: XCTestCase {
         engine.removePlugin(plugin: plugin2)
         XCTAssertNil(engine.currentPlugin)
         
+    }
+    
+    func testAddPlugin() throws {
+        let engine = PluginEngine()
+        let plugin = TestPlugin()
+        let plugin2 = TestPlugin2()
+        let plugin3 = TestPlugin3()
+        
+        engine.addPlugin(plugin: plugin)
+        engine.addPlugin(plugin: plugin2)
+        engine.addPlugin(plugin: plugin3)
+        
+        XCTAssertEqual(engine.plugins.count, 2)
     }
 }
