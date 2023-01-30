@@ -1,20 +1,19 @@
-import PluginInterface
 import Foundation
+import PluginInterface
 import SwiftUI
 
 public class PluginEngine: ObservableObject {
     @Published public private(set) var currentPlugin: (any PluginInterfaceProtocol)?
     @Published public private(set) var plugins: [any PluginInterfaceProtocol] = []
-    @Published public private(set) var remotePluginLoader: (any RemotePluginLoadingProtocol)
-    
+    @Published public private(set) var remotePluginLoader: any RemotePluginLoadingProtocol
+
     @Published public private(set) var isLoadingRemote = false
-    
+
     private var fileUtils: FileUtilsProtocol!
     private var nsPanelUtils: NSPanelUtilsProtocol!
     private var storeUtils: StoreUtilsProtocol!
     private let pluginUtils: PluginUtilsProtocol
-    
-    
+
     /**
      Initialize a plugin engine
      - parameter fileUtils: File utils helper for plguins to interact with the file system
@@ -23,34 +22,43 @@ public class PluginEngine: ObservableObject {
         self.pluginUtils = pluginUtils
         self.remotePluginLoader = remotePluginLoader
     }
-    
+
+    // This function sets up the dependencies of the class. It is used for dependency injection, which is used for testing.
     public func setup(fileUtils: FileUtilsProtocol = FileUtils(), nsPanelUtils: NSPanelUtilsProtocol = NSPanelUtils(), storeUtils: StoreUtilsProtocol = UserDefaultStore()) {
         self.fileUtils = fileUtils
         self.nsPanelUtils = nsPanelUtils
         self.storeUtils = storeUtils
     }
-    
+
     func handle() {
-        //TODO: Add handling method which will handle the event using plugins
+        // TODO: Add handling method which will handle the event using plugins
     }
 }
 
+// MARK: load plugin
 
-//MARK: load plugin
 public extension PluginEngine {
+    /**
+     Adds a plugin to the list of available plugins.
+     - parameter plugin: The plugin to be added.
+     */
     func addPlugin(plugin: any PluginInterfaceProtocol) {
-        if let previousPlugin = plugins.first(where: { $0.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier }) {
+        if let _ = plugins.first(where: { $0.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier }) {
             return
         }
-        
+
         plugins.append(plugin)
     }
-    
+
+    /**
+     Adds a plugin built by the given plugin builder to the list of available plugins.
+     - parameter builder: The plugin builder.
+     */
     func addPluginBuilder(builder: PluginBuilder) {
-        let plugin = builder.build(fileUtils: self.fileUtils, nsPanelUtils: self.nsPanelUtils, storeUtils: storeUtils)
+        let plugin = builder.build(fileUtils: fileUtils, nsPanelUtils: nsPanelUtils, storeUtils: storeUtils)
         addPlugin(plugin: plugin)
     }
-    
+
     /**
      This function is removing a plugin from the list of available plugins. It first checks if the plugin being removed is the current plugin and sets it to nil if it is. It then removes all instances of the plugin from the list of available plugins by matching the plugin's bundle identifier.
      - parameter plugin: The plugin you want to remove
@@ -63,18 +71,22 @@ public extension PluginEngine {
             p.manifest.bundleIdentifier == plugin.manifest.bundleIdentifier
         }
     }
-    
+
     @MainActor
+    /**
+     This function is removing a plugin from the list of available plugins. It first checks if the plugin being removed is the current plugin and sets it to nil if it is. It then removes all instances of the plugin from the list of available plugins by matching the plugin's bundle identifier.
+     - parameter plugin: The plugin you want to remove
+     */
     func removePlugin(bundleId: String) throws {
         guard let index = plugins.firstIndex(where: { p in
             p.manifest.bundleIdentifier == bundleId
         }) else {
             throw PluginErrors.pluginNotFoundWithBundleId(id: bundleId)
         }
-        
+
         plugins.remove(at: index)
     }
-    
+
     /**
      Loads a plugin located at the specified path.
      - parameter path: The file path of the plugin to be loaded.
@@ -88,14 +100,14 @@ public extension PluginEngine {
                 return nil
             }
         }
-        let plugin = self.pluginUtils.load(at: path, fileUtils: self.fileUtils, panelUtils: self.nsPanelUtils, storeUtils: storeUtils)
-        
+        let plugin = pluginUtils.load(at: path, fileUtils: fileUtils, panelUtils: nsPanelUtils, storeUtils: storeUtils)
+
         if autoAdd {
             addPlugin(plugin: plugin)
         }
         return plugin
     }
-    
+
     /**
      Asynchronously loads a plugin from a specified URL and version.
      - parameter url: The URL from where the plugin should be loaded.
@@ -119,7 +131,7 @@ public extension PluginEngine {
             throw error
         }
     }
-    
+
     /**
      Asynchronously updates a plugin from a specified URL and version.
      - parameter bundleId: Previous plugin's bundle id
@@ -147,8 +159,13 @@ public extension PluginEngine {
     }
 }
 
-//MARK: use plugin
+// MARK: use plugin
+
 public extension PluginEngine {
+    /**
+     Use a plugin with the given id
+     - throws: `PluginErrors.pluginNotFoundWithId` if the plugin cannot be found
+     */
     func use(id: UUID) throws {
         let plugin = plugins.first { p in
             p.id == id
@@ -158,9 +175,11 @@ public extension PluginEngine {
         }
         use(plugin: plugin)
     }
-    
+
     /**
-     Use bundle identifier
+     Use a plugin with the given bundle identifier
+
+     - throws: `PluginErrors.pluginNotFoundWithName` if the plugin cannot be found
      */
     func use(plugin name: String) throws {
         let plugin = plugins.first { p in
@@ -171,7 +190,11 @@ public extension PluginEngine {
         }
         use(plugin: plugin)
     }
-    
+
+    /**
+     Use a given plugin
+     - parameter plugin: The plugin to use
+     */
     func use(plugin: any PluginInterfaceProtocol) {
         plugin.setup()
         plugin.onUse()
@@ -179,16 +202,20 @@ public extension PluginEngine {
     }
 }
 
-//MARK: render
+// MARK: render
 
 public extension PluginEngine {
     @MainActor
+    /**
+     Renders the main view of the currently used plugin.
+     - returns: The main view of the plugin, or an `EmptyView` if no plugin is being used or the plugin does not have a view
+     */
     func render() -> AnyView {
         guard let currentPlugin = currentPlugin else {
-            //TODO: use handle method to handle the error
+            // TODO: use handle method to handle the error
             return AnyView(EmptyView())
         }
-        
+
         if currentPlugin.view is EmptyView {
             if !(currentPlugin.settings is EmptyView) {
                 return AnyView(
@@ -199,21 +226,27 @@ public extension PluginEngine {
                         }
                     })
             }
-            
+
             return AnyView(Text("Plugin doesn't have a renderer"))
         }
-        
+
         let view = currentPlugin.view as (any View)
-        
+
         return AnyView(view)
     }
-    
+
     @MainActor
     @ViewBuilder
+    /**
+      This function renders the settings for the plugins.
+      - Returns: A view that is the settings for the plugins.
+      - Parameters:
+        - plugins: An array of plugins.
+     */
     func renderSettings() -> some View {
         TabView {
             ForEach(plugins, id: \.manifest.bundleIdentifier) { plugin in
-                if !(plugin.settings is EmptyView){
+                if !(plugin.settings is EmptyView) {
                     let view = plugin.settings as (any View)
                     AnyView(view)
                         .padding()
