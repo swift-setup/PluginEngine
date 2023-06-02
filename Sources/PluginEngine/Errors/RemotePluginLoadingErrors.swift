@@ -36,3 +36,14 @@ public enum RemotePluginLoadingErrors: LocalizedError {
         }
     }
 }
+
+public enum VersionError: LocalizedError {
+    case invalidVersionFormat(String)
+    
+    public var errorDescription: String? {
+        switch self {
+            case .invalidVersionFormat(let format):
+                return "Given format: \(format) is not a valid version format. Expect: x.y.z"
+        }
+    }
+}

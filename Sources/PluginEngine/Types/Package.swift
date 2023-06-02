@@ -38,7 +38,6 @@ public struct Version {
     /// - Precondition: `prereleaseIdentifiers` can contain only ASCII alpha-numeric characters and "-".
     /// - Precondition: `buildMetaDataIdentifiers` can contain only ASCII alpha-numeric characters and "-".
     public init(_ major: Int, _ minor: Int, _ patch: Int, prereleaseIdentifiers _: [String] = [], buildMetadataIdentifiers _: [String] = [], startsWithV: Bool = false) {
-        precondition(major >= 0 && minor >= 0 && patch >= 0, "Version components must be non-negative")
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -85,6 +84,7 @@ extension Version: Comparable {
     }
 }
 
+//MARK: Version follows codable protocal
 extension Version: Codable {
     public func toString() -> String {
         var string = "\(major).\(minor).\(patch)"
@@ -102,6 +102,7 @@ extension Version: Codable {
     }
 }
 
+//MARK: Version follows ExpressibleByStringLiteral Protocal
 extension Version: ExpressibleByStringLiteral {
     /// Initializes a version struct with the provided string literal.
     ///
@@ -109,19 +110,20 @@ extension Version: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
         // parse the version string
         let components = value.split(separator: ".")
-        guard components.count >= 3 else {
-            fatalError("Invalid version string: \(value)")
+        if components.count == 3 {
+            var firstComponent: String = String(components[0])
+            var startsWithV = false
+            if firstComponent.lowercased().contains("v") {
+                startsWithV = true
+                firstComponent = firstComponent.lowercased().replacingOccurrences(of: "v", with: "")
+            }
+            
+            let major = Int(firstComponent)!
+            let minor = Int(components[1])!
+            let patch = Int(components[2])!
+            self.init(major, minor, patch, startsWithV: startsWithV)
+        } else {
+            self.init(-1, -1, -1)
         }
-        var firstComponent: String = String(components[0])
-        var startsWithV = false
-        if firstComponent.lowercased().contains("v") {
-            startsWithV = true
-            firstComponent = firstComponent.lowercased().replacingOccurrences(of: "v", with: "")
-        }
-        
-        let major = Int(firstComponent)!
-        let minor = Int(components[1])!
-        let patch = Int(components[2])!
-        self.init(major, minor, patch, startsWithV: startsWithV)
     }
 }
